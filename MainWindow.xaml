@@ -1,0 +1,126 @@
+﻿<Window x:Class="VoiceTyping.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Voice Typing"
+        Width="70" Height="70"
+        Icon="app.png"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing">
+    
+    <Window.Resources>
+        <!-- Idle Gradient -->
+        <LinearGradientBrush x:Key="IdleGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#667eea" Offset="0"/>
+            <GradientStop Color="#764ba2" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <!-- Recording Gradient -->
+        <LinearGradientBrush x:Key="RecordingGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#f5365c" Offset="0"/>
+            <GradientStop Color="#f56036" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <!-- Processing Gradient -->
+        <LinearGradientBrush x:Key="ProcessingGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#ffc107" Offset="0"/>
+            <GradientStop Color="#ff9800" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <!-- Drop Shadow -->
+        <DropShadowEffect x:Key="ButtonShadow" 
+                         BlurRadius="15" 
+                         ShadowDepth="3" 
+                         Opacity="0.4" 
+                         Color="#000000"/>
+    </Window.Resources>
+    
+    <Grid>
+        <!-- Main Button -->
+        <Button x:Name="MainButton" 
+                Width="60" Height="60"
+                Click="MainButton_Click"
+                PreviewMouseLeftButtonDown="MainButton_PreviewMouseLeftButtonDown"
+                PreviewMouseMove="MainButton_PreviewMouseMove"
+                Cursor="Hand">
+            <Button.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="⚙️ Settings" Click="SettingsMenuItem_Click"/>
+                    <Separator/>
+                    <MenuItem Header="❌ Exit" Click="ExitMenuItem_Click"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Pulse Animation Ring -->
+                        <Ellipse x:Name="PulseRing"
+                                Width="60" Height="60"
+                                Fill="{StaticResource RecordingGradient}"
+                                Opacity="0"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                        
+                        <!-- Main Circle -->
+                        <Ellipse x:Name="MainCircle"
+                                Width="60" Height="60"
+                                Fill="{StaticResource IdleGradient}"
+                                Effect="{StaticResource ButtonShadow}"/>
+
+                        <!-- Full Logo Image (visible when idle) -->
+                        <Image x:Name="LogoImage"
+                               Width="60" Height="60"
+                               Source="app.png"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                        
+                        <!-- Icon Container -->
+                        <Viewbox Width="28" Height="28" IsHitTestVisible="False">
+                            <Canvas Width="24" Height="24">
+                                <!-- Sound Wave Icon (visible when recording) -->
+                                <Path x:Name="WaveIcon"
+                                      Fill="White"
+                                      Opacity="0"
+                                      Data="M3,9H7L12,4V20L7,15H3V9M16.59,12L14,9.41L15.41,8L18,10.59L20.59,8L22,9.41L19.41,12L22,14.59L20.59,16L18,13.41L15.41,16L14,14.59L16.59,12Z">
+                                    <Path.RenderTransform>
+                                        <TranslateTransform X="0" Y="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                
+                                <!-- Processing Spinner (visible when processing) -->
+                                <Path x:Name="SpinnerIcon"
+                                      Fill="White"
+                                      Opacity="0"
+                                      RenderTransformOrigin="0.5,0.5"
+                                      Data="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Canvas>
+                        </Viewbox>
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+        
+        <!-- Tooltip -->
+        <TextBlock x:Name="TooltipText"
+                  Text="F8 to toggle"
+                  Foreground="#888888"
+                  FontSize="10"
+                  FontFamily="Segoe UI"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Bottom"
+                  Margin="0,0,0,-18"
+                  Opacity="0"/>
+    </Grid>
+</Window>
