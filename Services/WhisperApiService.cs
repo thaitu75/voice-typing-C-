@@ -35,7 +35,7 @@ namespace VoiceTyping.Services
             var audioContent = new ByteArrayContent(audioData);
             audioContent.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
             content.Add(audioContent, "file", "audio.wav");
-            content.Add(new StringContent("whisper-1"), "model");
+            content.Add(new StringContent("gpt-4o-mini-transcribe"), "model");
             // Add prompt to reduce hallucinations (especially YouTube subtitles)
             content.Add(new StringContent("Conversation, dictation, spoken text."), "prompt");
             
