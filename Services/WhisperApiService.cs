@@ -36,6 +36,8 @@ namespace VoiceTyping.Services
             audioContent.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
             content.Add(audioContent, "file", "audio.wav");
             content.Add(new StringContent("whisper-1"), "model");
+            // Add prompt to reduce hallucinations (especially YouTube subtitles)
+            content.Add(new StringContent("Conversation, dictation, spoken text."), "prompt");
             
             if (!string.IsNullOrEmpty(language))
             {

@@ -177,6 +177,14 @@ namespace VoiceTyping
             {
                 var audioData = _audioService.StopRecording();
                 
+                // Check for silence (prevent hallucinations)
+                if (_audioService.MaxVolume < 0.015f) // 1.5% threshold
+                {
+                    _isProcessing = false;
+                    UpdateVisualState();
+                    return;
+                }
+                
                 if (audioData.Length > 0)
                 {
                     var transcription = await _whisperService.TranscribeAsync(

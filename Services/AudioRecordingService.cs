@@ -14,11 +14,15 @@ namespace VoiceTyping.Services
         public event EventHandler<float>? AudioLevelChanged;
         public bool IsRecording => _isRecording;
 
+        private float _maxVolume = 0;
+        public float MaxVolume => _maxVolume;
+
         public void StartRecording()
         {
             if (_isRecording) return;
 
             _audioStream = new MemoryStream();
+            _maxVolume = 0; // Reset max volume
             
             _waveIn = new WaveInEvent
             {
@@ -40,6 +44,9 @@ namespace VoiceTyping.Services
                     if (sample32 < 0) sample32 = -sample32;
                     if (sample32 > max) max = sample32;
                 }
+                
+                if (max > _maxVolume) _maxVolume = max;
+                
                 AudioLevelChanged?.Invoke(this, max);
             };
 
@@ -52,25 +59,32 @@ namespace VoiceTyping.Services
             if (!_isRecording || _waveIn == null || _waveWriter == null || _audioStream == null)
                 return Array.Empty<byte>();
 
-            _waveIn.StopRecording();
-            _waveWriter.Flush();
-            _isRecording = false;
-
-            // Create a proper WAV file in memory
-            var resultStream = new MemoryStream();
-            _audioStream.Position = 0;
-            
-            // Copy the audio data to a new stream with proper WAV header
-            using (var tempStream = new MemoryStream())
+            try
             {
-                using (var writer = new WaveFileWriter(tempStream, _waveIn.WaveFormat))
+                _waveIn.StopRecording();
+                _waveWriter.Flush();
+                _isRecording = false;
+
+                // Create a proper WAV file in memory
+                _audioStream.Position = 0;
+                
+                // Copy the audio data to a new stream with proper WAV header
+                using (var tempStream = new MemoryStream())
                 {
-                    _audioStream.Position = 44; // Skip the original header
-                    var buffer = new byte[_audioStream.Length - 44];
-                    _audioStream.Read(buffer, 0, buffer.Length);
-                    writer.Write(buffer, 0, buffer.Length);
+                    using (var writer = new WaveFileWriter(tempStream, _waveIn.WaveFormat))
+                    {
+                        _audioStream.Position = 44; // Skip the original header
+                        var buffer = new byte[_audioStream.Length - 44];
+                        _audioStream.Read(buffer, 0, buffer.Length);
+                        writer.Write(buffer, 0, buffer.Length);
+                    }
+                    return tempStream.ToArray();
                 }
-                return tempStream.ToArray();
+            }
+            finally
+            {
+                _waveIn?.Dispose();
+                _waveIn = null;
             }
         }
 
