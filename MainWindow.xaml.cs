@@ -72,6 +72,9 @@ namespace VoiceTyping
 
             // Create animations
             CreateAnimations();
+            
+            // Set initial visual state
+            UpdateVisualState();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -98,7 +101,15 @@ namespace VoiceTyping
         {
             // If we just finished a drag, don't toggle recording
             // DragMove blocks, so we rely on the fact that DragMove eats the MouseUp event
-            ToggleRecording();
+            ToggleTranslation();
+        }
+
+        private void ToggleTranslation()
+        {
+            var currentState = _settingsService.Settings.TranslateToEnglish;
+            _settingsService.UpdateTranslateToEnglish(!currentState);
+            
+            UpdateVisualState();
         }
 
         private void MainButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -189,7 +200,8 @@ namespace VoiceTyping
                 {
                     var transcription = await _whisperService.TranscribeAsync(
                         audioData, 
-                        _settingsService.Settings.Language
+                        _settingsService.Settings.Language,
+                        _settingsService.Settings.TranslateToEnglish
                     );
 
                     if (!string.IsNullOrEmpty(transcription))
@@ -250,6 +262,12 @@ namespace VoiceTyping
                 spinnerIcon.Opacity = 0;
                 StopPulseAnimation(pulseRing);
                 StopSpinnerAnimation();
+            }
+
+            var translationIndicator = (Border)template.FindName("TranslationIndicator", MainButton);
+            if (translationIndicator != null)
+            {
+                translationIndicator.Opacity = _settingsService.Settings.TranslateToEnglish ? 1 : 0;
             }
         }
 

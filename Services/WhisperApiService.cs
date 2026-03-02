@@ -9,7 +9,8 @@ namespace VoiceTyping.Services
     public class WhisperApiService
     {
         private readonly HttpClient _httpClient;
-        private const string ApiUrl = "https://api.openai.com/v1/audio/transcriptions";
+        private const string TranscriptionsApiUrl = "https://api.openai.com/v1/audio/transcriptions";
+        private const string TranslationsApiUrl = "https://api.openai.com/v1/audio/translations";
 
         public WhisperApiService()
         {
@@ -25,7 +26,7 @@ namespace VoiceTyping.Services
                 new AuthenticationHeaderValue("Bearer", apiKey);
         }
 
-        public async Task<string> TranscribeAsync(byte[] audioData, string language = "")
+        public async Task<string> TranscribeAsync(byte[] audioData, string language = "", bool translateToEnglish = false)
         {
             if (_httpClient.DefaultRequestHeaders.Authorization == null)
                 throw new InvalidOperationException("API key not set. Please configure your OpenAI API key.");
@@ -35,18 +36,20 @@ namespace VoiceTyping.Services
             var audioContent = new ByteArrayContent(audioData);
             audioContent.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
             content.Add(audioContent, "file", "audio.wav");
-            content.Add(new StringContent("gpt-4o-mini-transcribe"), "model");
+            var modelName = translateToEnglish ? "whisper-1" : "gpt-4o-mini-transcribe";
+            content.Add(new StringContent(modelName), "model");
             // Add prompt to reduce hallucinations (especially YouTube subtitles)
             content.Add(new StringContent("Conversation, dictation, spoken text."), "prompt");
             
-            if (!string.IsNullOrEmpty(language))
+            if (!translateToEnglish && !string.IsNullOrEmpty(language))
             {
                 content.Add(new StringContent(language), "language");
             }
 
             try
             {
-                var response = await _httpClient.PostAsync(ApiUrl, content);
+                var endpointUrl = translateToEnglish ? TranslationsApiUrl : TranscriptionsApiUrl;
+                var response = await _httpClient.PostAsync(endpointUrl, content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)

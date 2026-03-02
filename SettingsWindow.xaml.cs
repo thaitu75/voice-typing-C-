@@ -18,6 +18,7 @@ namespace VoiceTyping
             // Load current settings
             ApiKeyBox.Password = _settingsService.Settings.ApiKey;
             LanguageBox.Text = _settingsService.Settings.Language;
+            TranslateCheckBox.IsChecked = _settingsService.Settings.TranslateToEnglish;
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -43,6 +44,7 @@ namespace VoiceTyping
             // Save settings
             _settingsService.UpdateApiKey(apiKey);
             _settingsService.UpdateLanguage(language);
+            _settingsService.UpdateTranslateToEnglish(TranslateCheckBox.IsChecked ?? false);
             
             // Update whisper service
             _whisperService.SetApiKey(apiKey);
@@ -55,6 +57,11 @@ namespace VoiceTyping
         {
             DialogResult = false;
             Close();
+        }
+
+        private void TranslateText_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TranslateCheckBox.IsChecked = !TranslateCheckBox.IsChecked;
         }
     }
 }

@@ -107,6 +107,20 @@
                                 </Path>
                             </Canvas>
                         </Viewbox>
+                        
+                        <!-- Translation Indicator -->
+                        <Border x:Name="TranslationIndicator"
+                                Background="#4CAF50"
+                                BorderBrush="#1e1e2e"
+                                BorderThickness="1.5"
+                                CornerRadius="10"
+                                Padding="4,1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,0,0"
+                                Opacity="0">
+                            <TextBlock Text="EN" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                     </Grid>
                 </ControlTemplate>
             </Button.Template>

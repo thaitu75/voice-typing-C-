@@ -8,6 +8,7 @@ namespace VoiceTyping.Services
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Language { get; set; } = string.Empty;
+        public bool TranslateToEnglish { get; set; } = false;
         public double WindowX { get; set; } = -1;
         public double WindowY { get; set; } = -1;
     }
@@ -70,6 +71,12 @@ namespace VoiceTyping.Services
         public void UpdateLanguage(string language)
         {
             _settings.Language = language;
+            Save();
+        }
+
+        public void UpdateTranslateToEnglish(bool translate)
+        {
+            _settings.TranslateToEnglish = translate;
             Save();
         }
 
