@@ -8,12 +8,14 @@ namespace VoiceTyping
     {
         private readonly SettingsService _settingsService;
         private readonly WhisperApiService _whisperService;
+        private readonly TranslationService _translationService;
 
-        public SettingsWindow(SettingsService settingsService, WhisperApiService whisperService)
+        public SettingsWindow(SettingsService settingsService, WhisperApiService whisperService, TranslationService translationService)
         {
             InitializeComponent();
             _settingsService = settingsService;
             _whisperService = whisperService;
+            _translationService = translationService;
 
             // Load current settings
             ApiKeyBox.Password = _settingsService.Settings.ApiKey;
@@ -46,8 +48,9 @@ namespace VoiceTyping
             _settingsService.UpdateLanguage(language);
             _settingsService.UpdateTranslateToEnglish(TranslateCheckBox.IsChecked ?? false);
             
-            // Update whisper service
+            // Update services
             _whisperService.SetApiKey(apiKey);
+            _translationService.SetApiKey(apiKey);
 
             DialogResult = true;
             Close();

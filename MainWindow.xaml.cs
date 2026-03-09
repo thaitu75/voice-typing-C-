@@ -6,6 +6,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using WindowsInput;
+using WindowsInput.Native;
 using VoiceTyping.Services;
 
 namespace VoiceTyping
@@ -17,6 +19,7 @@ namespace VoiceTyping
         private readonly AutoTypingService _typingService;
         private readonly GlobalHotkeyService _hotkeyService;
         private readonly SettingsService _settingsService;
+        private readonly TranslationService _translationService;
 
         private bool _isRecording;
         private bool _isProcessing;
@@ -33,15 +36,18 @@ namespace VoiceTyping
             _typingService = new AutoTypingService();
             _hotkeyService = new GlobalHotkeyService();
             _settingsService = new SettingsService();
+            _translationService = new TranslationService();
 
             // Set API key if saved
             if (!string.IsNullOrEmpty(_settingsService.Settings.ApiKey))
             {
                 _whisperService.SetApiKey(_settingsService.Settings.ApiKey);
+                _translationService.SetApiKey(_settingsService.Settings.ApiKey);
             }
 
-            // Subscribe to hotkey
+            // Subscribe to hotkeys
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+            _hotkeyService.TranslateHotkeyPressed += OnTranslateHotkeyPressed;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -149,6 +155,70 @@ namespace VoiceTyping
         private void OnHotkeyPressed(object? sender, EventArgs e)
         {
             Dispatcher.Invoke(ToggleRecording);
+        }
+
+        private void OnTranslateHotkeyPressed(object? sender, EventArgs e)
+        {
+            Dispatcher.Invoke(async () => await TranslateSelectedText());
+        }
+
+        private async Task TranslateSelectedText()
+        {
+            if (_isProcessing) return;
+
+            if (string.IsNullOrEmpty(_settingsService.Settings.ApiKey))
+            {
+                ShowSettings();
+                return;
+            }
+
+            _isProcessing = true;
+            UpdateVisualState();
+
+            try
+            {
+                // Small delay to ensure the hotkey doesn't interfere
+                await Task.Delay(50);
+
+                // Simulate Ctrl+C to copy selected text
+                var sim = new InputSimulator();
+                sim.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_C);
+
+                // Wait for clipboard to be populated
+                await Task.Delay(150);
+
+                // Read clipboard text
+                string selectedText = string.Empty;
+                if (Clipboard.ContainsText())
+                {
+                    selectedText = Clipboard.GetText();
+                }
+
+                if (string.IsNullOrWhiteSpace(selectedText))
+                {
+                    return;
+                }
+
+                // Translate the text
+                var translated = await _translationService.TranslateAsync(selectedText);
+
+                if (!string.IsNullOrEmpty(translated))
+                {
+                    // Put translated text on clipboard and paste it
+                    Clipboard.SetText(translated);
+                    await Task.Delay(50);
+                    sim.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Translation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _isProcessing = false;
+                UpdateVisualState();
+            }
         }
 
         private async void ToggleRecording()
@@ -332,7 +402,7 @@ namespace VoiceTyping
 
         private void ShowSettings()
         {
-            var settingsWindow = new SettingsWindow(_settingsService, _whisperService)
+            var settingsWindow = new SettingsWindow(_settingsService, _whisperService, _translationService)
             {
                 Owner = this
             };
