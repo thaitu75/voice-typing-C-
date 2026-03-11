@@ -178,21 +178,17 @@ namespace VoiceTyping
             try
             {
                 // Small delay to ensure the hotkey doesn't interfere
-                await Task.Delay(50);
+                await Task.Delay(100);
 
                 // Simulate Ctrl+C to copy selected text
                 var sim = new InputSimulator();
                 sim.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_C);
 
                 // Wait for clipboard to be populated
-                await Task.Delay(150);
+                await Task.Delay(300);
 
-                // Read clipboard text
-                string selectedText = string.Empty;
-                if (Clipboard.ContainsText())
-                {
-                    selectedText = Clipboard.GetText();
-                }
+                // Read clipboard text with retry
+                string selectedText = GetClipboardTextWithRetry();
 
                 if (string.IsNullOrWhiteSpace(selectedText))
                 {
@@ -204,9 +200,9 @@ namespace VoiceTyping
 
                 if (!string.IsNullOrEmpty(translated))
                 {
-                    // Put translated text on clipboard and paste it
-                    Clipboard.SetText(translated);
-                    await Task.Delay(50);
+                    // Put translated text on clipboard with retry, then paste
+                    SetClipboardWithRetry(translated);
+                    await Task.Delay(100);
                     sim.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
                 }
             }
@@ -218,6 +214,44 @@ namespace VoiceTyping
             {
                 _isProcessing = false;
                 UpdateVisualState();
+            }
+        }
+
+        private static string GetClipboardTextWithRetry(int maxRetries = 10, int delayMs = 50)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    if (Clipboard.ContainsText())
+                    {
+                        return Clipboard.GetText();
+                    }
+                    return string.Empty;
+                }
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    if (i == maxRetries - 1) throw;
+                    System.Threading.Thread.Sleep(delayMs);
+                }
+            }
+            return string.Empty;
+        }
+
+        private static void SetClipboardWithRetry(string text, int maxRetries = 10, int delayMs = 50)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    Clipboard.SetText(text);
+                    return;
+                }
+                catch (System.Runtime.InteropServices.COMException)
+                {
+                    if (i == maxRetries - 1) throw;
+                    System.Threading.Thread.Sleep(delayMs);
+                }
             }
         }
 
