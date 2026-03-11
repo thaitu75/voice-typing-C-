@@ -8,7 +8,7 @@ namespace VoiceTyping.Services
     public class AutoTypingService
     {
         private readonly InputSimulator _inputSimulator;
-        private const int CharacterDelayMs = 10;
+        private const int CharacterDelayMs = 2;
 
         public AutoTypingService()
         {
